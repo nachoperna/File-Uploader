@@ -16,6 +16,10 @@
                   hx-target=".success"
                   hx-swap="innerHTML"
                   hx-on:htmx:after-swap="success();reset();"
+                  hx-on:failed_open="alert('Error al intentar abrir archivo/s')"
+                  hx-on:failed_read="alert('Error al intentar leer archivo/s')"
+                  hx-on:failed_create="alert('Error al crear directorio en servidor')"
+                  hx-on:failed_copy="alert('Error al cargar imagen en servidor')"
             >
                   <span id="titulo">Subi tus fotos</span>
                   <div class="upload-container">
