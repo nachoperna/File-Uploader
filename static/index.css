@@ -1,0 +1,208 @@
+body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-weight: 600;
+      background-color: #F5F5FA;
+}
+
+.upload-form {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      border: none;
+      background-color: white;
+      box-shadow: 2px 10px 25px darkgray;
+      overflow: hidden;
+}
+
+#titulo {
+      font-size: 2.5rem;
+      padding: 20px 20px 0px 20px;
+      text-align: center;
+      /* top right bottom left */
+}
+
+.upload-container {
+      gap: 20px;
+      display: flex;
+      flex-direction: column;
+}
+
+.upload-form,
+.upload-container {
+      padding: 10px;
+      border-radius: 10px;
+}
+
+.select-button {
+      font-size: 1.3rem;
+      padding: 15px 100px;
+      border-radius: 10px;
+      background-color: #BD060A;
+      color: white;
+      text-align: center;
+      font-weight: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.3s ease;
+      box-shadow: 1px 3px 5px darkgray;
+}
+
+.select-button svg {
+      height: 24px;
+      width: 24px;
+      fill: #e3e3e3;
+}
+
+.select-button:hover {
+      transform: translateY(-4px);
+      background-color: #9e0508;
+      box-shadow: 0 6px 15px rgba(189, 6, 10, 0.3);
+}
+
+.success {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+}
+
+.success svg {
+      height: 100px;
+      width: 100px;
+      border-radius: 50%;
+      box-sizing: border-box;
+      background-color: #F5F5FA;
+      fill: #1a1a1a;
+}
+
+.selecciones {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+}
+
+.seleccion {
+      display: flex;
+      border: 2px;
+      border-radius: 10px;
+      border-style: dashed;
+      border-color: darkgrey;
+      background-color: #F5F5FA;
+      align-items: center;
+}
+
+.slide-in {
+      animation: slideIn 0.3s ease-out forwards;
+}
+
+@keyframes slideIn {
+      0% {
+            opacity: 0;
+            transform: translateY(15px) scale(0.98);
+            pointer-events: none;
+      }
+
+      100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+      }
+}
+
+.slide-out {
+      animation: slideOut 0.3s ease-out forwards;
+      pointer-events: none;
+}
+
+@keyframes slideOut {
+      0% {
+            opacity: 1;
+            transform: translateX(0);
+      }
+
+      100% {
+            opacity: 0;
+            transform: translateX(-100%);
+      }
+}
+
+.seleccion span {
+      padding: 10px;
+      text-align: center;
+      justify-content: center;
+      margin: 10px;
+}
+
+.boton-borrado {
+      margin-left: auto !important;
+      margin: 10px;
+      display: flex;
+      background: transparent;
+      text-align: center;
+      color: darkred;
+      height: 24px;
+      width: 24px;
+      box-sizing: border-box;
+      border-radius: 50%;
+}
+
+.boton-borrado:hover {
+      cursor: pointer;
+      background-color: darkred;
+      color: white;
+}
+
+.oculto,
+.upload-input {
+      display: none;
+}
+
+.upload-form label:hover {
+      cursor: pointer;
+}
+
+footer {
+      display: flex;
+      gap: 10px;
+}
+
+footer button {
+      border-radius: 5px;
+      padding: 8px;
+      font-family: -apple-system;
+      transition: all 0.3s ease;
+}
+
+footer button:hover {
+      cursor: pointer;
+}
+
+footer button:first-child {
+      flex: 2;
+      background: transparent;
+      border: none;
+}
+
+footer button:first-child:hover {
+      background: darkgray;
+}
+
+footer button:last-child {
+      flex: 3;
+      background-color: #1a1a1a;
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+}
+
+footer button:last-child:hover {
+      flex: 4;
+}
