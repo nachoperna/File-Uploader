@@ -41,8 +41,8 @@
                               <!-- Aquí se insertan dinamicamente los archivos subidos por el usuario -->
                         </div>
                         <footer id="acciones" class="oculto" >
-                              <button type="button" onclick="cancel()">Cancelar</button>
-                              <button type="submit" id="subir">Subir</button>
+                              <button type="button" id="cancelar" onclick="cancel()">Cancelar</button>
+                              <button type="submit" id="subir" onclick="loadingUpload()">Subir</button>
                         </footer>
                   </div>
                   <div class="success oculto">
@@ -114,8 +114,16 @@
                               alerta.classList.remove('slide-out');
                               container.classList.remove('oculto', 'slide-out');
                               container.classList.add('slide-in');
+                              document.getElementById('cancelar').classList.remove('oculto');
+                              document.getElementById('subir').classList.remove('texto-invisible','loading-upload');
+                              document.body.classList.remove('inactivo');
                         }, 300);
-                  }, 1500);
+                  }, 2000);
+            }
+            function loadingUpload(){
+                  document.getElementById('cancelar').classList.add('oculto');
+                  document.getElementById('subir').classList.add('texto-invisible','loading-upload');
+                  document.body.classList.add('inactivo');
             }
       </script>
 </html>
