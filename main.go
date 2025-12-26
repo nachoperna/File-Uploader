@@ -6,10 +6,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	// "sync"
+	"sync/atomic"
 )
 
-// el acceso a estas variables debe ser concurrente
-var imgCounter int
+var imgCounter int64 // el acceso a esta variable debe ser concurrente
+
+// var imgCounter atomic.Int64 // Tipo de datos especial para generar accesos concurrentes a esta variable con metodos especiales (lo maneja todo el runtime de Go por defecto)
+
 var validFormats = map[string]bool{
 	"image/png":  true,
 	"image/jpg":  true,
@@ -17,6 +21,8 @@ var validFormats = map[string]bool{
 	"image/heic": true,
 	"image/svg":  true,
 }
+
+// var mutex sync.Mutex
 
 func main() {
 	fs := http.FileServer(http.Dir("./static"))
@@ -35,7 +41,14 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(10 << 20)         // establece que escriba en RAM el contenido de la respuesta si es menor a 20 MB (10 Bytes desplazados 20 bits hacia la izquierda)
 	files := r.MultipartForm.File["files"] // obtenemos todos los archivos subidos
 	for _, file := range files {
-		imgCounter++
+
+		atomic.AddInt64(&imgCounter, 1) // operacion CONCURRENTE especial de Go para generar operaciones atomicas de incremento de una variable
+
+		// mutex.Lock()
+		// aux := imgCounter + 1
+		// imgCounter := aux
+		// mutex.Unlock()
+
 		content, err := file.Open() // abrimos el archivo
 		if err != nil {
 			w.Header().Set("HX-Trigger", "failed_open")
