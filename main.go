@@ -1,14 +1,21 @@
 package main
 
 import (
+	"archive/zip"
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
 	// "sync"
-	"github.com/martinlindhe/notify"
 	"sync/atomic"
+
+	"SubidaArchivos/views"
+
+	"github.com/joho/godotenv"
+	"github.com/martinlindhe/notify"
 )
 
 var imgCounter int64 // el acceso a esta variable debe ser concurrente
@@ -24,6 +31,10 @@ var validFormats = map[string]bool{
 	"image/webp": true,
 }
 
+var secretKey string
+
+var ctx context.Context
+
 // var mutex sync.Mutex
 
 func main() {
@@ -31,11 +42,22 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	imgCounter = 0
+	godotenv.Load()
+	secretKey = os.Getenv("SECRET_KEY")
+
+	ctx = context.Background()
+
+	imageServer := http.FileServer(http.Dir(os.Getenv("DIR_ARCHIVOS")))
+	http.Handle("/imageGetter/", http.StripPrefix("/imageGetter/", imageServer))
 
 	http.HandleFunc("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fs.ServeHTTP(w, r)
 	}))
 	http.HandleFunc("/upload", uploadHandler)
+	http.HandleFunc("/admin", adminHandler)
+	http.HandleFunc("/images", imagesHandler)
+	http.HandleFunc("/download", downloadHandler)
+	http.HandleFunc("/delete", deleteHandler)
 	http.ListenAndServe(":8080", nil)
 }
 
@@ -75,10 +97,10 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		extension := filepath.Ext(file.Filename)                                                     // sintaxis necesaria para quedarnos con la extension del archivo
-		nombre := file.Filename[:len(file.Filename)-len(extension)]                                  // acortamos el nombre del archivo con la sintaxis string[inicio:fin]
-		os.MkdirAll("./archivos", os.ModePerm)                                                       // creamos la carpeta SOLO SI NO EXISTE con los permisos de lectura y escritura
-		created, err := os.Create(fmt.Sprintf("./archivos/%s(%d)%s", nombre, imgCounter, extension)) // creamos el archivo en nuestra carpeta del servidor
+		extension := filepath.Ext(file.Filename)                                                                        // sintaxis necesaria para quedarnos con la extension del archivo
+		nombre := file.Filename[:len(file.Filename)-len(extension)]                                                     // acortamos el nombre del archivo con la sintaxis string[inicio:fin]
+		os.MkdirAll(os.Getenv("DIR_ARCHIVOS"), os.ModePerm)                                                             // creamos la carpeta SOLO SI NO EXISTE con los permisos de lectura y escritura
+		created, err := os.Create(fmt.Sprintf("%s/%s(%d)%s", os.Getenv("DIR_ARCHIVOS"), nombre, imgCounter, extension)) // creamos el archivo en nuestra carpeta del servidor
 		if err != nil {
 			w.Header().Set("HX-Trigger", "failed_create")
 			w.WriteHeader(http.StatusUnauthorized)
@@ -101,4 +123,66 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" ><path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>
 		<span>Fotos subidas con éxito</span>
 	`))
+}
+
+func adminHandler(w http.ResponseWriter, r *http.Request) {
+	sk := r.FormValue("secret-key")
+	if sk != secretKey {
+		w.Header().Set("HX-Trigger", "wrong-key")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	w.Header().Set("HX-Redirect", "/images")
+	w.WriteHeader(http.StatusOK)
+}
+
+func imagesHandler(w http.ResponseWriter, r *http.Request) {
+	archivos, err := os.ReadDir(os.Getenv("DIR_ARCHIVOS"))
+	if err != nil {
+		w.Header().Set("HX-Trigger", "error")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	views.ListImages(archivos).Render(ctx, w)
+}
+
+func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", "attachment;filename=images.zip")
+
+	writer := zip.NewWriter(w)
+	defer writer.Close()
+
+	directorio := os.Getenv("DIR_ARCHIVOS")
+	archivos, err := os.ReadDir(directorio)
+	if err != nil {
+		http.Error(w, "Error al leer carpeta de imagenes", http.StatusBadRequest)
+		return
+	}
+	for _, archivo := range archivos {
+		ruta := filepath.Join(directorio, archivo.Name())
+		contenido, err := os.Open(ruta)
+		if err != nil {
+			http.Error(w, "Error al leer imagen", http.StatusBadRequest)
+			return
+		}
+		defer contenido.Close()
+
+		creado, err := writer.Create(archivo.Name())
+		if err != nil {
+			http.Error(w, "Error al crear imagen dentro de zip", http.StatusBadRequest)
+			return
+		}
+		io.Copy(creado, contenido)
+	}
+
+	os.Remove("./images.zip")
+}
+
+func deleteHandler(w http.ResponseWriter, r *http.Request) {
+	err := os.RemoveAll(os.Getenv("DIR_ARCHIVOS"))
+	if err != nil {
+		http.Error(w, "Error al borrar imagenes del servidor", http.StatusBadRequest)
+		return
+	}
 }
