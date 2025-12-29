@@ -1,19 +1,108 @@
 body {
       display: flex;
       flex-direction: column;
+      justify-content: center;
       align-items: center;
       gap: 30px;
 }
 
 header {
-      margin-top: 30px;
-      gap: 10px;
+      top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 15px;
+      margin-left: 15px;
+      gap: 20px;
+      width: 100%;
+}
+
+.go-back {
+      position: absolute;
+      left: 10px;
+      background-color: transparent !important;
+}
+
+.go-back svg {
+      height: 25px;
+      width: 25px;
+      fill: #1a1a1a;
+}
+
+.go-back a {
+      text-decoration: none;
+      color: black;
+}
+
+.go-back:hover {
+      cursor: pointer;
+      background-color: lightgrey !important;
+}
+
+.no-files {
+      position: absolute;
+      padding: 15px;
+      top: 60px;
+      background-color: palegoldenrod;
+      border-radius: 8px;
+      width: 60%;
+      text-align: center;
+}
+
+.actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: 8px;
+      gap: 5px;
+      transition: background-color 0.3s ease;
+}
+
+.actions svg {
+      height: 25px;
+      width: 25px;
+}
+
+.actions a {
+      color: black;
+      text-decoration: none;
+}
+
+.actions:hover {
+      cursor: pointer;
+}
+
+.specials {
+      background-color: transparent;
+}
+
+.specials:hover {
+      background-color: lightgrey !important;
+}
+
+.delete {
+      background-color: #1a1a1a;
+      transition: transform 0.3s ease !important;
+}
+
+.delete:hover {
+      transform: translateY(-4px);
+}
+
+.delete svg {
+      fill: white;
+}
+
+.delete a {
+      color: white;
 }
 
 .images-grid {
       display: grid;
       gap: 2rem;
       grid-template-columns: repeat(4, 1fr);
+      margin-bottom: 2rem;
 }
 
 .image {
