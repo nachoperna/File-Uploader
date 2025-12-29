@@ -3,6 +3,7 @@ package main
 import (
 	"archive/zip"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -132,6 +133,14 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+	_, err := os.ReadDir(os.Getenv("DIR_ARCHIVOS"))
+	if err != nil {
+		if !errors.Is(err, os.ErrNotExist) {
+			w.Header().Set("HX-Trigger", "error")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+	}
 	w.Header().Set("HX-Redirect", "/images")
 	w.WriteHeader(http.StatusOK)
 }
@@ -139,9 +148,10 @@ func adminHandler(w http.ResponseWriter, r *http.Request) {
 func imagesHandler(w http.ResponseWriter, r *http.Request) {
 	archivos, err := os.ReadDir(os.Getenv("DIR_ARCHIVOS"))
 	if err != nil {
-		w.Header().Set("HX-Trigger", "error")
-		w.WriteHeader(http.StatusUnauthorized)
-		return
+		if !errors.Is(err, os.ErrNotExist) {
+			http.Error(w, "Error al obtener imagenes", http.StatusNoContent)
+			return
+		}
 	}
 	views.ListImages(archivos).Render(ctx, w)
 }
@@ -185,4 +195,5 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error al borrar imagenes del servidor", http.StatusBadRequest)
 		return
 	}
+	http.Redirect(w, r, "/images", http.StatusSeeOther)
 }
