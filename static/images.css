@@ -149,7 +149,7 @@ header {
       }
 
       .go-back {
-            position: inherit;
+            position: inherit !important;
       }
 
       .delete a {
@@ -160,5 +160,6 @@ header {
             content: "Borrar";
             font-size: 1rem;
             color: white;
+            position: inherit;
       }
 }
