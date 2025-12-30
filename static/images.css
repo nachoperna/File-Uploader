@@ -1,18 +1,16 @@
 body {
       display: flex;
       flex-direction: column;
-      justify-content: center;
+      justify-content: flex-start;
       align-items: center;
       gap: 30px;
 }
 
 header {
-      top: 15px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin-top: 15px;
-      margin-left: 15px;
+      margin-top: 35px;
       gap: 20px;
       width: 100%;
 }
@@ -40,9 +38,7 @@ header {
 }
 
 .no-files {
-      position: absolute;
       padding: 15px;
-      top: 60px;
       background-color: palegoldenrod;
       border-radius: 8px;
       width: 60%;
@@ -117,4 +113,42 @@ header {
       height: 300px;
       width: 300px;
       object-fit: cover;
+}
+
+@media (max-width: 1320px) {
+      .images-grid {
+            grid-template-columns: repeat(3, 1fr);
+      }
+}
+
+@media (max-width: 1000px) {
+      .images-grid {
+            grid-template-columns: repeat(2, 1fr);
+      }
+}
+
+@media (max-width: 650px) {
+      .images-grid {
+            grid-template-columns: repeat(1, 1fr);
+      }
+
+      header {
+            display: grid;
+            grid-template-columns: repeat(2, 0fr);
+            margin-bottom: 2rem;
+      }
+
+      .go-back {
+            position: inherit;
+      }
+
+      .delete a {
+            font-size: 0;
+      }
+
+      .delete a::after {
+            content: "Borrar";
+            font-size: 1rem;
+            color: white;
+      }
 }
