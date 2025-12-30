@@ -334,6 +334,27 @@ footer button:last-child:hover {
       fill: #1a1a1a;
 }
 
+#scroll-up {
+      position: fixed;
+      z-index: 1;
+      right: 20px;
+      bottom: 20px;
+      border-radius: 8px;
+      background-color: lightgrey;
+}
+
+#scroll-up svg {
+      height: 40px;
+      width: 40px;
+      fill: #1a1a1a;
+      padding: 5px;
+}
+
+#scroll-up:hover {
+      background-color: darkgrey;
+      cursor: pointer;
+}
+
 @media (max-width: 400px) {
       .upload-form {
             margin-left: 5px;
