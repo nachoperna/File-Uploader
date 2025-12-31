@@ -57,7 +57,8 @@ func main() {
 	http.HandleFunc("/upload", uploadHandler)
 	http.HandleFunc("/admin", adminHandler)
 	http.HandleFunc("/images", imagesHandler)
-	http.HandleFunc("/download", downloadHandler)
+	http.HandleFunc("/download", downloadAllHandler)
+	http.HandleFunc("/download/{name}", downloadHandler)
 	http.HandleFunc("/delete", deleteHandler)
 	http.ListenAndServe(":8080", nil)
 }
@@ -156,7 +157,7 @@ func imagesHandler(w http.ResponseWriter, r *http.Request) {
 	views.ListImages(archivos).Render(ctx, w)
 }
 
-func downloadHandler(w http.ResponseWriter, r *http.Request) {
+func downloadAllHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/zip")
 	w.Header().Set("Content-Disposition", "attachment;filename=images.zip")
 
@@ -196,4 +197,21 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.Redirect(w, r, "/images", http.StatusSeeOther)
+}
+
+func downloadHandler(w http.ResponseWriter, r *http.Request) {
+	nombre := r.PathValue("name")
+	w.Header().Set("Content-Type", "application/image")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s", nombre))
+
+	directorio := os.Getenv("DIR_ARCHIVOS")
+	ruta := filepath.Join(directorio, nombre)
+	archivo, err := os.Open(ruta)
+	if err != nil {
+		http.Error(w, "Error al leer imagen", http.StatusBadRequest)
+		return
+	}
+	defer archivo.Close()
+
+	archivo.WriteTo(w)
 }

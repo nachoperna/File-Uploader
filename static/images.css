@@ -73,7 +73,8 @@ header {
       text-decoration: none;
 }
 
-.actions:hover {
+.actions:hover,
+.download-section {
       cursor: pointer;
 }
 
@@ -115,12 +116,59 @@ header {
       width: 300px;
       overflow: hidden;
       box-shadow: 2px 10px 25px darkgray;
+      position: relative;
 }
 
 .image img {
-      height: 300px;
-      width: 300px;
+      height: inherit;
+      width: inherit;
       object-fit: cover;
+}
+
+.image .download-section {
+      position: absolute;
+      height: inherit;
+      width: inherit;
+      inset: 0;
+      margin: auto;
+      background-color: rgba(245, 245, 245, 0.5);
+      backdrop-filter: blur(9px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+}
+
+.invisible {
+      opacity: 0 !important;
+}
+
+.image a {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 3px;
+      pointer-events: auto;
+      transition: pointer-events 0s linear 0.3s;
+}
+
+.link-inactivo {
+      pointer-events: none !important;
+      transition: pointer-events 0s linear 0s;
+}
+
+.image a svg {
+      height: 50px;
+      width: 50px;
+}
+
+.image a span {
+      color: black;
+      font-size: 1.2rem;
 }
 
 @media (max-width: 1320px) {
