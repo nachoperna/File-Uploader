@@ -75,14 +75,14 @@ func ListImages(archivos []os.DirEntry) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><div class=\"download-section invisible\" onclick=\"this.classList.toggle('invisible'); document.getElementById('download-link').classList.toggle('link-inactivo');\"><a id=\"download-link\" class=\"link-inactivo\" href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><div class=\"download-section invisible\" onclick=\"this.classList.toggle('invisible'); this.querySelector('.download-link').classList.toggle('link-inactivo');\"><a class=\"download-link link-inactivo\" href=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var4 templ.SafeURL
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs("/download/" + archivo.Name())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/images.templ`, Line: 55, Col: 88}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `views/images.templ`, Line: 55, Col: 83}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
