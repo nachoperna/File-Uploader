@@ -5,18 +5,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	// "sync"
+	"SubidaArchivos/views"
 	"sync/atomic"
 
-	"SubidaArchivos/views"
+	"github.com/chai2010/webp"
 
 	"github.com/joho/godotenv"
-	"github.com/martinlindhe/notify"
 )
 
 var imgCounter int64 // el acceso a esta variable debe ser concurrente
@@ -68,7 +73,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	files := r.MultipartForm.File["files"] // obtenemos todos los archivos subidos
 	for _, file := range files {
 
-		atomic.AddInt64(&imgCounter, 1) // operacion CONCURRENTE especial de Go para generar operaciones atomicas de incremento de una variable
+		tag_number := atomic.AddInt64(&imgCounter, 1) // operacion CONCURRENTE especial de Go para generar operaciones atomicas de incremento de una variable
 
 		// mutex.Lock()
 		// aux := imgCounter + 1
@@ -99,26 +104,29 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		extension := filepath.Ext(file.Filename)                                                                        // sintaxis necesaria para quedarnos con la extension del archivo
-		nombre := file.Filename[:len(file.Filename)-len(extension)]                                                     // acortamos el nombre del archivo con la sintaxis string[inicio:fin]
-		os.MkdirAll(os.Getenv("DIR_ARCHIVOS"), os.ModePerm)                                                             // creamos la carpeta SOLO SI NO EXISTE con los permisos de lectura y escritura
-		created, err := os.Create(fmt.Sprintf("%s/%s(%d)%s", os.Getenv("DIR_ARCHIVOS"), nombre, imgCounter, extension)) // creamos el archivo en nuestra carpeta del servidor
+		extension := filepath.Ext(file.Filename)                    // sintaxis necesaria para quedarnos con la extension del archivo
+		nombre := file.Filename[:len(file.Filename)-len(extension)] // acortamos el nombre del archivo con la sintaxis string[inicio:fin]
+		os.MkdirAll(os.Getenv("DIR_ARCHIVOS"), os.ModePerm)         // creamos la carpeta SOLO SI NO EXISTE con los permisos de lectura y escritura
+
+		path_original_format := fmt.Sprintf("%s/%s(%d)%s", os.Getenv("DIR_ARCHIVOS"), nombre, tag_number, extension)
+		created_original_format, err := os.Create(path_original_format) // creamos el archivo en nuestra carpeta del servidor
 		if err != nil {
 			w.Header().Set("HX-Trigger", "failed_create")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		_, err = io.Copy(created, content) // copiamos el contenido del archivo subido por el usuario hacia el archivo creado en nuestro servidor
+		convertToWebp(w, nombre, tag_number, content)
+
+		content.Seek(0, 0)
+		_, err = io.Copy(created_original_format, content) // copiamos el contenido del archivo subido por el usuario hacia el archivo creado en nuestro servidor
+		created_original_format.Close()
 		if err != nil {
 			w.Header().Set("HX-Trigger", "failed_copy")
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 	}
-	go func() {
-		notify.Notify("File Uploader", "New Files", fmt.Sprintf("A total of %d files have been received in the Server", len(files)), "~/Downloads/notification_badge.png")
-	}()
 
 	w.WriteHeader(200) // si llegamos aca es porque todos los archivos se subieron con exito
 	w.Write([]byte(`
@@ -171,20 +179,22 @@ func downloadAllHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, archivo := range archivos {
-		ruta := filepath.Join(directorio, archivo.Name())
-		contenido, err := os.Open(ruta)
-		if err != nil {
-			http.Error(w, "Error al leer imagen", http.StatusBadRequest)
-			return
-		}
-		defer contenido.Close()
+		if filepath.Ext(archivo.Name()) != ".webp" {
+			ruta := filepath.Join(directorio, archivo.Name())
+			contenido, err := os.Open(ruta)
+			if err != nil {
+				http.Error(w, "Error al leer imagen", http.StatusBadRequest)
+				return
+			}
+			defer contenido.Close()
 
-		creado, err := writer.Create(archivo.Name())
-		if err != nil {
-			http.Error(w, "Error al crear imagen dentro de zip", http.StatusBadRequest)
-			return
+			creado, err := writer.Create(archivo.Name())
+			if err != nil {
+				http.Error(w, "Error al crear imagen dentro de zip", http.StatusBadRequest)
+				return
+			}
+			io.Copy(creado, contenido)
 		}
-		io.Copy(creado, contenido)
 	}
 
 	os.Remove("./images.zip")
@@ -202,16 +212,47 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	nombre := r.PathValue("name")
 	w.Header().Set("Content-Type", "application/image")
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s", nombre))
 
 	directorio := os.Getenv("DIR_ARCHIVOS")
-	ruta := filepath.Join(directorio, nombre)
-	archivo, err := os.Open(ruta)
+	patron := filepath.Join(directorio, strings.TrimSuffix(nombre, filepath.Ext(nombre))+".*")
+	rutas, _ := filepath.Glob(patron)
+
+	for _, ruta := range rutas {
+		ext := filepath.Ext(ruta)
+		if ext != ".webp" {
+			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=%s", filepath.Join(filepath.Base(ruta), ext)))
+			archivo, err := os.Open(ruta)
+			if err != nil {
+				http.Error(w, "Error al leer imagen", http.StatusBadRequest)
+				return
+			}
+			defer archivo.Close()
+
+			archivo.WriteTo(w)
+		}
+	}
+}
+
+func convertToWebp(w http.ResponseWriter, nombre string, tag_number int64, content multipart.File) {
+	path_webp := fmt.Sprintf("%s/%s(%d).webp", os.Getenv("DIR_ARCHIVOS"), nombre, tag_number)
+	created_webp, err := os.Create(path_webp) // creamos el archivo en nuestra carpeta del servidor
 	if err != nil {
-		http.Error(w, "Error al leer imagen", http.StatusBadRequest)
+		w.Header().Set("HX-Trigger", "failed_create")
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	defer archivo.Close()
-
-	archivo.WriteTo(w)
+	// formateado necesario para el encoding a webp
+	img_formateada, _, err := image.Decode(content.(io.Reader))
+	if err != nil {
+		w.Header().Set("HX-Trigger", "failed_convert")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	err = webp.Encode(created_webp, img_formateada, &webp.Options{Lossless: false, Quality: 80})
+	created_webp.Close()
+	if err != nil {
+		w.Header().Set("HX-Trigger", "failed_convert")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
 }
